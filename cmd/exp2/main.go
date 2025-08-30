@@ -33,9 +33,26 @@ func handler() http.Handler {
 	})
 }
 
+func handler2() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cs, ok := cookieSetterFrom(r.Context())
+		if !ok {
+			w.Write([]byte("fail"))
+			return
+		}
+		cs.Set(&http.Cookie{
+			Name:  "exp2",
+			Value: fmt.Sprintf("%d", rand.IntN(1_000_000)),
+			Path:  "/",
+		})
+
+		w.Write([]byte("kek"))
+	})
+}
+
 func main() {
 	mux := http.NewServeMux()
-	mux.Handle("GET /", withResponseWriter(handler()))
+	mux.Handle("GET /", withCookieSetter(handler2()))
 
 	fmt.Print("http://localhost:3001\n")
 	err := http.ListenAndServe(":3001", mux)
